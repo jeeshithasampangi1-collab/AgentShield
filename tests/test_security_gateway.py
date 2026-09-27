@@ -197,3 +197,36 @@ def test_high_risk_request_is_blocked_by_gateway():
     assert response.json()["decision"] == "BLOCK"
     assert response.json()["risk_score"] == 40
     assert response.json()["reason"] == "Risk score is too high"
+
+
+def test_missing_api_key_is_rejected():
+    response = client.post(
+        "/check-request",
+        json={
+            "agent": "demo-agent",
+            "tool": "weather",
+            "action": "get_weather",
+            "destination": "Boston",
+            "data": "current weather"
+        }
+    )
+
+    assert response.status_code == 422
+
+
+def test_unknown_agent_is_blocked_by_gateway():
+    response = client.post(
+        "/check-request",
+        json={
+            "agent": "unknown-agent",
+            "tool": "weather",
+            "action": "get_weather",
+            "api_key": "some-key",
+            "destination": "Boston",
+            "data": "current weather"
+        }
+    )
+
+    assert response.status_code == 200
+    assert response.json()["decision"] == "BLOCK"
+    assert response.json()["reason"] == "Authentication failed"
